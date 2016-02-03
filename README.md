@@ -2,7 +2,7 @@
 Scripts and other support for launching and managing large-scale repair
 experiments on a cloud infrastructure (usually EC2). 
 
-## disclaimer(s)
+### disclaimer(s)
 
 The existing set of scripts is a huge kludge that was never intended to survive
 as long as it has.  I look forward to generalizing it and improving its design,
@@ -11,7 +11,7 @@ usability, and maintainability.
 (I use CGenprog to refer to the GenProg4C code and G4J for GenProg4Java
 throughout this explanation.)
 
-## somewhat relevant history
+### somewhat relevant history
 
 The current scripts in this repository are taken from a private svn repository
 (hosted at UVA).  These scripts have been used to launch and manage repair
@@ -19,7 +19,7 @@ experiments across many virtual machines in one of several cloud frameworks.
 The most robust and best-tested and most widely used of these modes is EC2,
 though the protocol was roughly the same for all of them.
 
-## Design decisions
+### Design decisions
 
 Throughout my explanation, I've stumbled upon various design points in
 generalizing this setup for G4J.  I am trying to document them as I find them,
@@ -52,7 +52,34 @@ in a particular experimental run.
 Regardless, it is imperative that we save which version of Defects4J and G4J we
 use in any particular run in the experimental log, to enable reproducibility. 
 
-## High-level Workflow
+(D3) Robustness in experiment launching, part 1.  Experiments involve launching
+a large number of VMs.  Turns out that no cloud system can successfully always
+spin up 100s of VMs at a time and have every one actually succeed.  If not all
+VMs launch successfully, the driver script launches experiments on the ones that
+*do* spin up and prints an error message about those that didn't succeed,
+telling the user to kill those instances (which are usually zombies) and then
+presumably try again to launch the missing experimental runs.  Figuring out
+which runs those are is a manual process; it relies on the fact that experiments
+are launched in sequence and the individual scripts that launch the experiments
+are numbered.  So if I saw that 2 instances in a launch that should have created
+10 failed to launch, I knew that that meant the last 2 scripts (9.sh and 10.sh)
+didn't launch, and so the experimental parameters they were instantiated with
+correspond to the missing run (because of coincidental ordering, this usually
+just means the last two seeds).
+
+This is not an amazing process.
+
+Part 2: each of stage, copy, and run can fail if a given virtual machine
+instance croaks.  The script tries some hard-coded (possibly an optional
+argument?) number of times and prints out some information on those that fail.
+Usually I find that VMs fail early, however, so I'm not certain what kind of
+output is provided here.  
+
+Regardless, the "capped number of repeated attempts" thing is absolutely
+necessary for robustness; what can be improved is support for launching the
+desired experiments that failed and debug output. 
+
+### High-level Workflow
 
 Here's the general idea: the user specifies the scenario name, configuration
 file and any arguments to pass to CGenProg, and each random seed on which she
@@ -60,7 +87,7 @@ wants it to be run.  The script launches one VM per seed on which genprog will
 be run; and then creates a script to conduct the actual run, copies it over to a
 VM, and launches it remotely. More on that in a minute.
 
-## A single experiment script 
+### experiment-machine-script-template.sh: A single experiment script 
 
 Let's start with what happens on a single virtual machine, to which a script is
 copied and then launched.
@@ -147,8 +174,7 @@ In theory, it's possible to run more than one seed in sequence on a given VM
 up when the test cache is saved, but isn't usually worth doing.  At least, we
 rarely do it for CGenProg.
 
-## Actually creating those scripts for a set of experiments, creating the VMs,
-   copying over, launching, etc.
+## Actually creating those scripts for a set of experiments, creating the VMs, copying over, launching, etc.
 
 The script experiment.py is the main driver.  It takes a few explicit
 command-line options, all of which are optional.
@@ -168,10 +194,99 @@ A fair amount of information is required to actually programmatically launch
 VMs, including the base AMI, the availability zone, the desired instance type,
 and the user's AWS key.  I seem to have made arbitrary decisions about which of
 these to hard code and which to read from the directives file (look at
-ec2_launch_instances).
-
-
-
+ec2_launch_instances).  I suspect more should be read from the directives files,
+with default values provided in the script as applicable. 
 
 ### Required non-AWS information
 
+Anything that's in a blank export at the top of
+experiments-machine-script-template.sh is required information.
+
+#### how many VMs?
+
+The number of required VMs is computed from the number of multiply-defined
+parameters in the directives files.  Notice that directive.test, for example,
+has multiple SEEDS= but only one TARBALL.  If there were two TARBALL definitions
+(bug 1 and bug 2) there would be #seeds * # tarballs VMs created.
+
+If, for example, you put multiple seeds on one lien (SEEDS="1 2 3"), then those
+three seeds are all run (or attempted) on a single VM.
+
+I'm not sure what happens if you try more than one tarball or scenario per
+line.  We don't enforce in any way *which* parameters can be multiply-defined,
+and just relied on the user (CLG) to not do something weird like specify more
+than one AMI.  
+
+Blank lines or lines starting with a pound sign in the directives files are ignored.
+
+### experiment.py
+
+Some of this is sort of commented.  I don't repeat information in this readme
+that is contained in function comments, so look at experiment.py while reading
+this for more. 
+
+
+setup(): 
+
+sets up a local workspace (a directory to store intermediate files and log
+files.  For example, the output of calls to ec2 CLI, and the instantiated
+scripts for each machine, are stored in this workspace).
+
+reads in the directive files and computes the number of required
+virtual machines.  It checks that the required arguments in the template are
+specified in the directives.
+
+create_scripts() produces lists of arguments that will be used to produce
+scripts; basically figures out the singlydefined x multiply defined combinations
+taht correspond to the number of VMs, discussed above. 
+
+get_instances() 
+Ignoring "premade-instances" for a second, basically just calls launch_instances
+for the specified cloud system (again, we can kill all non-ec2 support).  
+
+VMs, when launched, take time to spin up and acquire network addresses.  So,
+get_instances repeatedly sleeps a bit, then checks to get the addresses of the
+instances we're launching (look at ec2_get_instances).  It tries this some
+number of times before giving up.  (D3) 
+
+One of the optional arguments to experiment.py is a list of premade instances to
+use.  This is useful mostly when one interrupts experiment.py because of some
+observed mistake in setup, *after* launch-instances was called, but *before*
+scripts were actually launched on them.  
+
+(to be checked manually, naturally).
+
+prepare_scripts() actually creates the scripts, in the workspace directory.
+They are helpfully named N.sh, for N between 1 and the number of instances being
+created.  N.sh is experiment-machine-script-template.sh with the missing bits
+filled in.  
+
+stage(), for each instance, and each script in N.sh (N \in 1--number instances)
+copies N.sh to a unique VM instance. It also copies
+"experiment-machine-script-wrapper.sh" and various key files necessary for
+communicating with results and host machines over as well.
+
+run() calls experiment-machine-script-wrapper.sh on each machine over ssh for
+all instances successfully staged.
+
+Note that all of these steps can fall; see (D3). 
+
+
+### experiment-machine-script-wrapper.sh
+
+One cannot background commands launched over ssh, and ssh will hang until a
+command completes.  So, on each instance, experiment-machine-script.sh is
+actually launched using a call to something called
+experiment-machine-script-wrapper.sh, which just calls
+experiment-machine-script.sh in the background and exits with successful
+status.  Yes, this is the best way to do this.
+
+### Root permissions and random systemsy stuff
+
+CGenProg experiments require root; G4J shouldn't.  This is good.  It also means
+we probably don't need to modify the AMI to allow sudo without tty.  We may need
+to modify the AMI such that sh maps to bash, not dash; I'm not sure if our
+current scripts are POSIX compliant, because who cares?
+
+Note the bit in experiment-machine-script above about overcommit-memory.  Ask me
+about this if it causes a headache. 

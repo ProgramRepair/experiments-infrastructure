@@ -407,7 +407,8 @@ def stage(stage_list, done):
                 elif(attempts < num_attempts):
                     new_stage_list.append((count, phase, attempts + 1))
         return stage(new_stage_list, done)
-    
+
+# note the hard-coded root@ username below; need to change for G4J experiments.    
 def run(to_run):
     ssh_cmd = \
         "ssh -p %d -o StrictHostKeyChecking=false -n -i %s root@%s \"/bin/bash experiment-machine-script-wrapper.sh\" &> %s/%d.log"

@@ -2,13 +2,13 @@
 Scripts and other support for launching and managing large-scale repair
 experiments on a cloud infrastructure (usually EC2). 
 
-# disclaimer
+## disclaimer
 
 The existing set of scripts is a huge kludge that was never intended to survive
 as long as it has.  I look forward to generalizing it and improving its design,
 usability, and maintainability.
 
-# history
+## somewhat relevant history
 
 The current scripts in this repository are taken from a private svn repository
 (hosted at UVA).  These scripts have been used to launch and manage repair
@@ -16,16 +16,16 @@ experiments across many virtual machines in one of several cloud frameworks.
 The most robust and best-tested and most widely used of these modes is EC2,
 though the protocol was roughly the same for all of them.
 
-# Design decisions
+## Design decisions
 
-We can either generalize the approach to work across many different types of
+(D1) One or many? We can either generalize the approach to work across many different types of
 repair experiment launches (GenProg4Java vs GenProg4C) or instantiate two sets
 of scripts, one for Java and one for C.  I propose something close to the former
 approach, with customization; more suggestions below.  CLG anticipates we can
 remove (or simply not re-implement) support for the other cloud types moving
 forward, regardless of which way we go.
 
-# Workflow
+## High-level Workflow
 
 (I use CGenprog to refer to the GenProg4C code and G4J for GenProg4Java
 throughout this explanation.)
@@ -36,7 +36,7 @@ wants it to be run.  The script launches one VM per seed on which genprog will
 be run; and then creates a script to conduct the actual run, copies it over to a
 VM, and launches it remotely. More on that in a minute.
 
-# A single experiment script 
+## A single experiment script 
 
 Let's start with what happens on a single virtual machine, to which a script is
 copied and then launched.
@@ -127,7 +127,7 @@ In theory, it's possible to run more than one seed in sequence on a given VM
 up when the test cache is saved, but isn't usually worth doing.  At least, we
 rarely do it for CGenProg.
 
-# Actually creating those scripts for a set of experiments
+## Actually creating those scripts for a set of experiments
 
 
 The script experiment.py is the main driver.  It takes a few explicit
@@ -142,7 +142,7 @@ experiment, while the test-specific directive contains those that do. This is
 not enforced semantically by anything, it's just a convention, as is the naming
 scheme of the files.
 
-## Required AWS information
+### Required AWS information
 
 A fair amount of information is required to actually programmatically launch
 VMs, including the base AMI, the availability zone, the desired instance type,
@@ -153,5 +153,5 @@ ec2_launch_instances).
 
 
 
-## Required non-AWS information
+### Required non-AWS information
 

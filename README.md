@@ -135,10 +135,10 @@ machine and directory.  This part needs to change because we're setting up the
 scenarios differently, by updating or acquiring g4j and defects4j (D2) and
 calling a script to setup the particular scenario we want to try to repair
 (which will need to be user specified, so added to the exports at the top, if we
-follow the current paradigm), presumbly from the g4j repository.
-
-If defects4j or g4j are either not present on the machine or not available to be
-copied over or checked out, this should be considered a failure.
+follow the current paradigm), presumbly from the g4j repository.  If defects4j
+or g4j are either not present on the machine or not available to be copied over
+or checked out, this should probably be considered a failure (and checked in
+sanity checking).
 
 What we did for CGenProg was copy a particular executable over from a specified
 host machine (~ line 99 of script template),  to ensure that
@@ -324,4 +324,6 @@ robustness issues compound.
 
 But you definitely do want to do more than one at a time.
 
-
+When testing experiment setup, launch small numbers of simultaneous micro
+instances.  They're free.  Possibly up the amount of time you're willing to wait
+for spin up though, because they're also slow.

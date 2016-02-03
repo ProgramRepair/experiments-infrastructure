@@ -246,9 +246,11 @@ reads in the directive files and computes the number of required
 virtual machines.  It checks that the required arguments in the template are
 specified in the directives.
 
+
 create_scripts() produces lists of arguments that will be used to produce
 scripts; basically figures out the singlydefined x multiply defined combinations
 taht correspond to the number of VMs, discussed above. 
+
 
 get_instances() 
 Ignoring "premade-instances" for a second, basically just calls launch_instances
@@ -271,15 +273,18 @@ scripts were actually launched on them.
 
 (to be checked manually, naturally).
 
+
 prepare_scripts() actually creates the scripts, in the workspace directory.
 They are helpfully named N.sh, for N between 1 and the number of instances being
 created.  N.sh is experiment-machine-script-template.sh with the missing bits
 filled in.  
 
+
 stage(), for each instance, and each script in N.sh (N \in 1--number instances)
 copies N.sh to a unique VM instance. It also copies
 "experiment-machine-script-wrapper.sh" and various key files necessary for
 communicating with results and host machines over as well.
+
 
 run() calls experiment-machine-script-wrapper.sh on each machine over ssh for
 all instances successfully staged.
@@ -294,7 +299,7 @@ command completes.  So, on each instance, experiment-machine-script.sh is
 actually launched using a call to something called
 experiment-machine-script-wrapper.sh, which just calls
 experiment-machine-script.sh in the background and exits with successful
-status.  Yes, this is the best way to do this.
+status.  Yes, this is actually the best way to do this.
 
 ### Root permissions and random systemsy stuff
 

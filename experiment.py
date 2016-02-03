@@ -176,9 +176,15 @@ def qemu_get_addresses(instances):
 # FIXME: add error handling!
 # saves the run instance info to dirname/run-instances.txt
 # saves the instance list to dirname/instances.txt
+# note that the size parameter is misleading, here, because I don't actually use
+# it anywhere and instead just hardcoded c1.medium as instance type.
 def ec2_launch_instances (num_desired,size):
     run_instances_file = dirname + "/run-instances.txt"
     instance_list_file = dirname + "/instances.txt"
+    # Note: (A) we currently don't check for BASE_AMI as a required argument,
+    # and (B) the key (genprogkey), the instance type (c1.medium), the shutdown
+    # behavior (terminate) and the prefix to the client-token
+    # (genprog-idempotent) here are hard-coded.  Most of them shouldn't be.  
     shell_str = "ec2-run-instances " + envget("BASE_AMI") + " -n " + str(num_desired) + \
         " -k genprogkey -t c1.medium --availability-zone " + envget("AVAIL_ZONE") + \
         " --instance-initiated-shutdown-behavior terminate " + \
@@ -361,6 +367,10 @@ def do_scp(count,to_scp,where_scp):
     scp_str = scp_something % (port_ht[count],vm_key,to_scp,address_ht[count],where_scp)
     return (subprocess.call(scp_str,shell=True) == 0)
 
+# Stage stages the experiments on each machine.  Because VMs can spin up at
+# different rates, and scping all the files at once can arbitrarily fail, it
+# uses a baby state machine per experiment being staged to make sure all the
+# pieces are successfully copied over.  
 def stage(stage_list, done):
     if (len(stage_list) == 0): 
         return done

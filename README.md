@@ -40,8 +40,10 @@ the subsequent explanation (if applicable).
 We can either generalize the approach to work across many different types of
 repair experiment launches (GenProg4Java vs GenProg4C) or instantiate two sets
 of scripts, one for Java and one for C.  I propose something close to the former
-approach, with customization.  I believe we can remove (or not re-implement)
-support for the other cloud types besides EC2, regardless of which way we go.
+approach, with customization, probably producing multiple
+experiment-machine-script-template.sh templates.  I believe we can remove (or
+not re-implement) support for the other cloud types besides EC2, regardless of
+which way we go.
 
 (D2) Where to get defects4j and g4j, which version should they be set to, and
 how will we keep track?

@@ -2,11 +2,14 @@
 Scripts and other support for launching and managing large-scale repair
 experiments on a cloud infrastructure (usually EC2). 
 
-## disclaimer
+## disclaimer(s)
 
 The existing set of scripts is a huge kludge that was never intended to survive
 as long as it has.  I look forward to generalizing it and improving its design,
 usability, and maintainability.
+
+(I use CGenprog to refer to the GenProg4C code and G4J for GenProg4Java
+throughout this explanation.)
 
 ## somewhat relevant history
 
@@ -18,21 +21,38 @@ though the protocol was roughly the same for all of them.
 
 ## Design decisions
 
+Throughout my explanation, I've stumbled upon various design points in
+generalizing this setup for G4J.  I am trying to document them as I find them,
+in one place; I refer to them in context by their tags here where they apply in
+the subsequent explanation (if applicable).
+
 (D1) One or many set of driver scripts? 
 
 We can either generalize the approach to work across many different types of
 repair experiment launches (GenProg4Java vs GenProg4C) or instantiate two sets
 of scripts, one for Java and one for C.  I propose something close to the former
 approach, with customization; more suggestions below.  CLG anticipates we can
-remove (or simply not re-implement) support for the other cloud types moving
+remove (or simply not re-implement) support for the other cloud types besides EC2 moving
 forward, regardless of which way we go.
 
-(D2) Where to get defects4j and g4j, which version should they be set to, and how will we keep track?
+(D2) Where to get defects4j and g4j, which version should they be set to, and
+how will we keep track?
+
+The original CGenProg experimental scripts were setup such that the scenarios to
+be repaired and the version of CGenProg to use to repair them (as a compiled
+binary) were hosted on a separate server.  On experiment initiation, the scripts
+controlling the experiment copy those files over from the host machine to the
+VM.
+
+Our VM has defects4j and G4J checked out already on them, so this seems
+unecessary.  However, it provides a benefit in the sense that we can be very
+certain which version of a defect and which version of the repair code were used
+in a particular experimental run. 
+
+Regardless, it is imperative that we save which version of Defects4J and G4J we
+use in any particular run in the experimental log, to enable reproducibility. 
 
 ## High-level Workflow
-
-(I use CGenprog to refer to the GenProg4C code and G4J for GenProg4Java
-throughout this explanation.)
 
 Here's the general idea: the user specifies the scenario name, configuration
 file and any arguments to pass to CGenProg, and each random seed on which she
@@ -75,17 +95,13 @@ genprog-many-bugs directory.
 
 At line 87, it copies a tarball of the scenario over from a specified host
 machine and directory.  This part needs to change because we're setting up the
-scenarios differently, by updating defects4j (D2) which should be checked out on the
-VM already) to a specified (or most current? Design decision! Either way, we
-need to write out to the log which version of Defects4J (and genprog4j?) was
-used for a particular experimental run) revision and calling a setup script to
-setup the particular scenario we want to try to repair (which will need to be
-user specified, so added to the exports at the top, if we follow the current
-paradigm), presumbly from the genprog4java repository (which will need to be
-updated, either to a specified SHA or most recent, as with defects4j).  
+scenarios differently, by updating or acquiring g4j and defects4j (D2) and
+calling a script to setup the particular scenario we want to try to repair
+(which will need to be user specified, so added to the exports at the top, if we
+follow the current paradigm), presumbly from the g4j repository.
 
 If defects4j or g4j are either not present on the machine or not available to be
-copied over, this should be considered a failure.
+copied over or checked out, this should be considered a failure.
 
 What we did for CGenProg was copy a particular executable over from a specified
 host machine (~ line 99 of script template),  to ensure that
@@ -131,8 +147,8 @@ In theory, it's possible to run more than one seed in sequence on a given VM
 up when the test cache is saved, but isn't usually worth doing.  At least, we
 rarely do it for CGenProg.
 
-## Actually creating those scripts for a set of experiments
-
+## Actually creating those scripts for a set of experiments, creating the VMs,
+   copying over, launching, etc.
 
 The script experiment.py is the main driver.  It takes a few explicit
 command-line options, all of which are optional.

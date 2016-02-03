@@ -18,12 +18,16 @@ though the protocol was roughly the same for all of them.
 
 ## Design decisions
 
-(D1) One or many? We can either generalize the approach to work across many different types of
+(D1) One or many set of driver scripts? 
+
+We can either generalize the approach to work across many different types of
 repair experiment launches (GenProg4Java vs GenProg4C) or instantiate two sets
 of scripts, one for Java and one for C.  I propose something close to the former
 approach, with customization; more suggestions below.  CLG anticipates we can
 remove (or simply not re-implement) support for the other cloud types moving
 forward, regardless of which way we go.
+
+(D2) Where to get defects4j and g4j, which version should they be set to, and how will we keep track?
 
 ## High-level Workflow
 
@@ -71,7 +75,7 @@ genprog-many-bugs directory.
 
 At line 87, it copies a tarball of the scenario over from a specified host
 machine and directory.  This part needs to change because we're setting up the
-scenarios differently, by updating defects4j (which should be checked out on the
+scenarios differently, by updating defects4j (D2) which should be checked out on the
 VM already) to a specified (or most current? Design decision! Either way, we
 need to write out to the log which version of Defects4J (and genprog4j?) was
 used for a particular experimental run) revision and calling a setup script to

@@ -1,0 +1,15 @@
+GENPROG_MANY_BUGS=genprog-many-bugs
+TARBALL_HOST=liskov.cs.virginia.edu
+TARBALL_HOST_PATH=/home/claire/tarballs/
+REPAIR_HOST_PATH=/home/claire/tarballs/
+HOST_KEYFILE=genprogkey_rsa
+HOST_USER=claire
+RESULTS_HOST=ec2-23-22-198-176.compute-1.amazonaws.com
+RESULTS_KEYFILE=genprogkey.pem
+RESULTS_USER=root
+VM_KEY=genprogkey.pem
+SHUTDOWN_TIMEOUT=2880m
+SHUTDOWN=yes
+DEBUG_FILE=/root/debug.txt
+AVAIL_ZONE=us-east-1b
+BASE_AMI=ami-1928e970

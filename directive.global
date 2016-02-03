@@ -1,0 +1,18 @@
+GENPROG_MANY_BUGS=genprog-many-bugs
+TARBALL_HOST=liskov.cs.virginia.edu
+TARBALL_HOST_PATH=/home/claire/new-tarballs
+REPAIR_HOST_PATH=/home/claire/tarballs
+# key to copy things from the host machine
+HOST_KEYFILE=genprogkey_rsa
+#key to actually launch a VM
+KEYFILE=genprogkey_rsa
+HOST_USER=claire
+RESULTS_HOST=liskov.cs.virginia.edu
+#key to copy back to results hosting machine
+RESULTS_KEYFILE=genprogkey_rsa
+RESULTS_USER=claire
+SHUTDOWN_TIMEOUT=720m
+SHUTDOWN=yes
+VM_KEY=new-clegoues-key
+DEBUG_FILE=/root/debug.txt
+BASE_AMI=ami-0000000a

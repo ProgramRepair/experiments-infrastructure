@@ -1,0 +1,14 @@
+BATCH_NAME=valgrind-test
+SEEDS=1
+#SEEDS=2
+#SEEDS=3
+#SEEDS=4
+SEEDS=5
+SEEDS=6
+SEEDS=7
+SEEDS=8
+SEEDS=9
+SEEDS=10
+CONFIGURATION=configuration-default
+REPAIR_ARGS="--sanity yes --sample 0.1 --crossover one --appp 0.5 --delp 0.85 --repp 0.75 --swapp 0.0 --neg-weight 0.35 --pos-weight 0.65"
+TARBALL=valgrind-bug-11817-11818.tar.gz

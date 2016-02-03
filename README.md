@@ -8,16 +8,25 @@ The existing set of scripts is a huge kludge that was never intended to survive
 as long as it has.  I look forward to generalizing it and improving its design,
 usability, and maintainability.
 
-(I use CGenprog to refer to the GenProg4C code and G4J for GenProg4Java
-throughout this explanation.)
+I use CGenprog to refer to the GenProg4C code and G4J for GenProg4Java
+throughout this explanation.
 
-### somewhat relevant history
+### somewhat relevant history 
 
 The current scripts in this repository are taken from a private svn repository
 (hosted at UVA).  These scripts have been used to launch and manage repair
 experiments across many virtual machines in one of several cloud frameworks.
 The most robust and best-tested and most widely used of these modes is EC2,
-though the protocol was roughly the same for all of them.
+though the approach was roughly the same for all of them.  See (D1). 
+
+Overall, this task (experiment launching on EC2) is hard for several reasons.
+First, there are at least a dozen "gotchas" involved in EC2 and VM management at
+a systems config level.  Second, cloud infrastructures are not as robust as
+they'd like you to believe.  This serves to explain most of the nastiness in the
+current setup.  Regardless of whether we adapt the current setup or rewrite it,
+I strongly encourage all parties to learn from what is currently here, because
+the VAST majority of the possibly weird-looking decisions are a direct result of
+tripping over such a gotcha over the course of past experimental deployment. 
 
 ### Design decisions
 
@@ -26,14 +35,13 @@ generalizing this setup for G4J.  I am trying to document them as I find them,
 in one place; I refer to them in context by their tags here where they apply in
 the subsequent explanation (if applicable).
 
-(D1) One or many set of driver scripts? 
+(D1) One or many set(s) of driver scripts? 
 
 We can either generalize the approach to work across many different types of
 repair experiment launches (GenProg4Java vs GenProg4C) or instantiate two sets
 of scripts, one for Java and one for C.  I propose something close to the former
-approach, with customization; more suggestions below.  CLG anticipates we can
-remove (or simply not re-implement) support for the other cloud types besides EC2 moving
-forward, regardless of which way we go.
+approach, with customization.  I believe we can remove (or not re-implement)
+support for the other cloud types besides EC2, regardless of which way we go.
 
 (D2) Where to get defects4j and g4j, which version should they be set to, and
 how will we keep track?
@@ -53,27 +61,27 @@ Regardless, it is imperative that we save which version of Defects4J and G4J we
 use in any particular run in the experimental log, to enable reproducibility. 
 
 (D3) Robustness in experiment launching, part 1.  Experiments involve launching
-a large number of VMs.  Turns out that no cloud system can successfully always
-spin up 100s of VMs at a time and have every one actually succeed.  If not all
-VMs launch successfully, the driver script launches experiments on the ones that
-*do* spin up and prints an error message about those that didn't succeed,
-telling the user to kill those instances (which are usually zombies) and then
-presumably try again to launch the missing experimental runs.  Figuring out
-which runs those are is a manual process; it relies on the fact that experiments
-are launched in sequence and the individual scripts that launch the experiments
-are numbered.  So if I saw that 2 instances in a launch that should have created
-10 failed to launch, I knew that that meant the last 2 scripts (9.sh and 10.sh)
-didn't launch, and so the experimental parameters they were instantiated with
+a large number of VMs.  It turns out that no cloud system can spin up 100s of
+VMs at a time and have every one actually succeed.  If not all VMs launch
+successfully, the driver script launches experiments on the ones that *do* spin
+up and prints an error message about those that didn't succeed, telling the user
+to kill those instances (which are usually zombies) and then presumably try
+again to launch the missing experimental runs.  Figuring out which runs those
+are is a manual process that relies on the fact that experiments are launched in
+sequence and the individual scripts that launch the experiments are numbered.
+So if I saw that 2 instances in a launch that should have created 10 failed to
+launch, I knew that that meant the last 2 scripts (9.sh and 10.sh) didn't
+launch, and so the experimental parameters they were instantiated with
 correspond to the missing run (because of coincidental ordering, this usually
 just means the last two seeds).
 
 This is not an amazing process.
 
 Part 2: each of stage, copy, and run can fail if a given virtual machine
-instance croaks.  The script tries some hard-coded (possibly an optional
-argument?) number of times and prints out some information on those that fail.
-Usually I find that VMs fail early, however, so I'm not certain what kind of
-output is provided here.  
+instance fails to come into existence or croaks after doing so.  The script
+tries some hard-coded (possibly an optional argument?) number of times and
+prints out some information on those that fail.  Usually I find that VMs fail
+early, however, so I'm not certain what kind of output is provided here.
 
 Regardless, the "capped number of repeated attempts" thing is absolutely
 necessary for robustness; what can be improved is support for launching the
@@ -249,6 +257,11 @@ get_instances repeatedly sleeps a bit, then checks to get the addresses of the
 instances we're launching (look at ec2_get_instances).  It tries this some
 number of times before giving up.  (D3) 
 
+The calls to create-tags is hugely important; it names the instances.  Otherwise
+you have a bunch of unnamed instances in your ec2 world and you can't tell them
+apart.  The names it creates aren't hugely descriptive, but are better than
+nothing.
+
 One of the optional arguments to experiment.py is a list of premade instances to
 use.  This is useful mostly when one interrupts experiment.py because of some
 observed mistake in setup, *after* launch-instances was called, but *before*
@@ -290,3 +303,23 @@ current scripts are POSIX compliant, because who cares?
 
 Note the bit in experiment-machine-script above about overcommit-memory.  Ask me
 about this if it causes a headache. 
+
+### EC2 gotchas that don't fit elsewhere
+
+Trust me on overcommit-memory
+
+The idempotent token thing is actually important.
+
+ec2 cli and aws cli are not the same thing and both have changed since these
+scripts were written; we need to verify and modify the API calls accordingly.
+
+Ec2 accounts have a hard cap on the number of allowable simultaneous VMs.  You
+can get them to raise this limit, but you have to ask.  Even when they do raise
+the limit, there has historically been a hard limit on the number you can launch
+at once, meaning that you'll need to call experiment.py multiple times.  Even if
+there weren't, you want to do it in batches, otherwise it takes forever and
+robustness issues compound.
+
+But you definitely do want to do more than one at a time.
+
+

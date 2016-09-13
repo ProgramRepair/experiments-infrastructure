@@ -1,0 +1,91 @@
+README to test and launch repairability experiments for defects4j dataset using aws EC2 
+instances. Please note that these scripts are specific to defects4j dataset and ami used 
+for the experiment. 
+
+launchexperiment.py
+-------------------
+The main driver script is launchexperiment.py
+
+Input arguments:
+arg1 = 'start'/'stop'/'terminate'
+arg2 = path-to-key-file
+
+Example run:
+python launchexperiment.py start /user/ubuntu/defect4jvm.pem
+
+Description:
+Using 'start' will spawn the vms, copy the script 'launch-repair.sh' (required to run experiment) 
+and then execute the script on vms.
+
+Using 'stop' will shutdown the vms. This automatically happens when the experiment on vm finishes. 
+The functionality is implemented in case we want to interrupt the execution. 
+
+Using 'terminate' will delete all the vms. This should be run once the experiment finishes successfully.
+
+Parameters such as faultlocalization flag, number of seeds (specified using startseed, endseed),
+number of defects (specified using start defect, total defects), number of vms to run (min_count, 
+max_count) etc. are specified in this script and can be configured as per need. So for example to 
+just run faultlocalization for all the defects, set faultlocflag="true" and endseed=1. For configuring 
+other parameters kindly refer to the comments specified along with parameters in the script. 
+
+=============================
+
+launch-repair.sh
+----------------
+
+Input arguments: 
+arg1 = ProjectName 
+arg2 = start-defect-id 
+arg3 = end-defect-id + 1 
+arg4 = project-checkedout-folder-name
+arg5 = start-seed 
+arg6 = end-seed 
+arg7 = fault-loc-flag
+arg8 = path-to-genprog
+arg9 = path-to-defects4 
+arg10 = test-type
+arg11 = test-percentage
+
+Example run:
+bash launch-repair.sh Chart 1 27 chart 1 20 false /home/ubuntu/genprog4java /home/ubuntu/defects4j allHuman 100
+
+The script launch-repair.sh is a shell script that executes genprog4java code on given defects4j defects
+considering various parameters. This script is run automatically by the driver script on all vms. For a 
+given range of defects, seeds this script executes genprog4java code on each of those defects and for every 
+seed in serial order. Once the execution for a defect finishes, the output is copied to result-server which 
+has fixed ip-address specified in the script parameter RESULTS_HOST. Once all the runs finish, it shutdowns 
+the vm.
+
+===========================
+results-stats.py
+----------------
+This script is used to verify if experiment ran successfully for all the defects and find out information about 
+reparability results (defects, seeds and variants which resulted in Repair Found) after the experiment is finished. 
+
+===========================
+defect4jvm.pem
+--------------
+This is a key file associated with aws ami. This is copied to vms so that the outputs generated on them can be
+copied to Result Server (another aws instance) which required keyfile.
+
+===========================
+testingscripts/fullrepairtesting.py
+-----------------------------------
+This script is used to test full execution (20 seeds) on 15 sample defects (3 defects taken from each of the 
+5 projects). This script with create 5 vms and launch experiment for each project on single vm. The output
+generated on vms is copied to Result Server. This script requires 'launch-repair.sh' and 'defects4j.pem'
+for successful execution. 
+
+===========================
+testingscripts/faultloctesting.py
+-----------------------------------
+This script is used to test execution upto fault localization. It launches experiment on all 357 defects with
+single seed on 5 vms. The output generated on vms is copied to Result Server. This script requires 'launch-repair.sh' 
+and 'defects4j.pem' for successful execution.
+
+===========================
+testingscripts/gettestresults.py
+-----------------------------------
+This script is used to get the results of full repair or fault localization testing as described above. This 
+script is to be run on RESULT-SERVER from within the folder containing experiment output. Upon running, the script
+asks us to enter 1 to get fault-localization testing results and 2 to get full repair testing results. 

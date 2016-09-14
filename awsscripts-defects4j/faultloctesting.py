@@ -9,7 +9,7 @@ import argparse
 import os
 
 # specify AWS keys
-auth = {"aws_access_key_id": "AKIAJ5XZGHY7MG7M6CKQ", "aws_secret_access_key": "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"}
+auth = {"aws_access_key_id": "<key>", "aws_secret_access_key": "<value>"}
 
 # create the connection object
 conn = boto.ec2.connect_to_region("us-east-1", **auth)
@@ -39,7 +39,7 @@ testpercent=100
 # parameters required for vm
 alldone=False
 vmcount=1
-ami='ami-8385f094' # also need to specify this in create_instances method
+ami='ami-<id>' # also need to specify this in create_instances method
 instancetype='c4.xlarge' # also need to specify this in create_instances method
 
 # count of total #defects in a project plus one (values are based on current defects in defects4j dataset)

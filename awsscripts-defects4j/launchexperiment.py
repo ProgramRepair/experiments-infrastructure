@@ -256,7 +256,7 @@ def delete_volumes():
 
 # method to run the script to launch an experiment on vm
 def run(vmip, vm_key, project, startdefectid, enddefectid, folder):
-	ssh_cmd = "ssh -o StrictHostKeyChecking=false -n -i %s ubuntu@%s \"nohup /bin/bash launch-repair.sh %s %s %s %s %s %s %s %s %s %s %s\" &"
+	ssh_cmd = "ssh -o StrictHostKeyChecking=false -n -i %s ubuntu@%s \"nohup /bin/bash launch-repair.sh %s %s %s %s %s %s %s %s %s %s %s > /dev/null 2>&1 &\""
 	ssh_str = ssh_cmd % (vm_key, vmip, project, startdefectid, enddefectid, folder, startseed, endseed, faultlocflag, genprogpath, defects4jpath, testtype, testpercent)
 	print "executing script remotely using ", ssh_str	
 	FNULL = open(os.devnull, 'w')

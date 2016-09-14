@@ -6,10 +6,10 @@ command = "find . -wholename \"./*Buggy\" | wc -li"
 status, output1 = commands.getstatusoutput(command)
 if status is 0:
 	print "total defects executed: ", output1
-	command = "find . -wholename \"./*Buggy/log*Seed20.txt\" | wc -l"
-	status, output2 = commands.getstatusoutput(command)
-	if status is 0:
-        print "total defects executed successfully: ", output2
+command = "find . -wholename \"./*Buggy/log*Seed20.txt\" | wc -l"
+status, output2 = commands.getstatusoutput(command)
+if status is 0:
+	print "total defects executed successfully: ", output2
 
 if output1 != output2:
 	l1=[]
@@ -39,6 +39,12 @@ status, output = commands.getstatusoutput(command)
 defects_repaired = []
 reparability_info = {}
 seed_count = {}
+repair_count = {}
+repair_count['Chart']=0
+repair_count['Closure']=0
+repair_count['Math']=0
+repair_count['Lang']=0
+repair_count['Time']=0
 
 if status is 0:
 	output = output.split('\n')
@@ -51,6 +57,17 @@ if status is 0:
 #		print "%s\t%s\t%s" %(defect, seed, variant)
 		if defect not in defects_repaired:
 			defects_repaired.append(defect.strip())
+			if "chart" in defect:
+                                repair_count['Chart'] +=1
+                        elif "closure" in defect:
+                                repair_count['Closure'] +=1
+                        elif "math" in defect:
+                                repair_count['Math'] +=1
+                        elif "lang" in defect:
+                                repair_count['Lang'] +=1
+                        elif "time" in defect:
+                                repair_count['Time'] +=1
+
 		if defect not in reparability_info:
 			reparability_info[defect]= "%s variant %s"%(seed,variant)
 			seed_count[defect]=1
@@ -60,5 +77,6 @@ if status is 0:
 			seed_count[defect]= seed_count[defect]+1
 
 print "Total #defects repaired", len(defects_repaired)
+print repair_count
 for defect in defects_repaired:
 	print defect, "\t", seed_count[defect], "\t", reparability_info[defect]

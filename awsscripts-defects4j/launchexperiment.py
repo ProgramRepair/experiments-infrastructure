@@ -24,7 +24,7 @@ projects['Time']=True
 
 # parameters required for launching experiment
 faultlocflag="false"
-startseed=20
+startseed=1
 endseed=20
 startdefectid=1
 enddefectid=2
@@ -37,7 +37,7 @@ testpercent=100
 alldone=False
 vmcount=1
 ami='<<add-ami>>' # also need to specify this in create_instances method
-instancetype='c4.xlarge' # also need to specify this in create_instances method
+instancetype='<<add-type>>' # also need to specify this in create_instances method
 
 # count of total #defects in a project plus one (values are based on current defects in defects4j dataset)
 defects={}
@@ -58,9 +58,9 @@ def main():
 		keypath = sys.argv[2]
 
 	if action == "start":
-		#terminate_instances()
-		#sleep(30)
-		#delete_volumes()
+		terminate_instances()
+		sleep(30)
+		delete_volumes()
 		create_instances(keypath)
 	elif action == "stop":
 		stopInstances()
@@ -74,7 +74,7 @@ def main():
 # method to create instances
 def create_instances(vm_key):
 	# create instances. specify ami, key, type, min and max count
-	instances_resv = conn.run_instances('ami-8385f094',key_name='defect4jvm',instance_type='c4.xlarge',security_group_ids=["sg-6a3e5112"], min_count = 1, max_count = 1)
+	instances_resv = conn.run_instances('<<add-ami>>',key_name='<<key name>>',instance_type='<<add-type>>',security_group_ids=[<<ids>>], min_count = 48, max_count = 48)
 	print instances_resv
 	print "number of instances created = ", len(instances_resv.instances)
 	for i in instances_resv.instances:
